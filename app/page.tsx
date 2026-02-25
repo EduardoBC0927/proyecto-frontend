@@ -5,11 +5,18 @@ export default function Home() {
   const [mensaje, setMensaje] = useState('Esperando respuesta...');
 
   useEffect(() => {
-    // Aquí hacemos la petición al Backend (puerto 3000)
-    fetch('http://localhost:3000')
+    // Leemos la variable de entorno configurada en el archivo .env
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+    if (!apiUrl) {
+      setMensaje('Error: La URL del backend no está configurada en las variables de entorno.');
+      return;
+    }
+
+    fetch(apiUrl)
       .then((res) => res.text())
       .then((data) => setMensaje(data))
-      .catch((error) => setMensaje('Error: No se pudo conectar con el backend'));
+      .catch((error) => setMensaje('Error: No se pudo conectar con el servidor externo'));
   }, []);
 
   return (
