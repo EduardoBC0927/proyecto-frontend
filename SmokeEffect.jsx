@@ -9,7 +9,7 @@ export default function SmokeEffect({ text = "" }) {
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    // Calculamos la posición del ratón en porcentajes
+    // Calculamos la posición del ratón en porcentajes para un posicionamiento CSS fácil
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setMousePos({ x, y });

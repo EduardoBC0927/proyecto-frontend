@@ -98,3 +98,10 @@
     z-index: 5;
     pointer-events: none; /* Evita que esta capa bloquee los clics */
   }
+  /* Agrega esto al final de tu archivo SmokeEffect.module.css */
+.cursorInteract {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none; /* Evita que esta capa bloquee los clics */
+  }
