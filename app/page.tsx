@@ -1,6 +1,11 @@
 "use client";
 import { useState, useEffect } from 'react';
-import SmokeEffect from '../SmokeEffect';
+import dynamic from 'next/dynamic';
+
+// IMPORTACIÓN DINÁMICA: Esto evita que el WebGL rompa Next.js
+const SmokeEffect = dynamic(() => import('../SmokeEffect'), { 
+  ssr: false 
+});
 
 export default function Home() {
   const [mensaje, setMensaje] = useState('Esperando respuesta...');
