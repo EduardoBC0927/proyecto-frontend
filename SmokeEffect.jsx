@@ -1,41 +1,68 @@
 "use client";
-import { useState, useRef } from 'react';
-import styles from './SmokeEffect.module.css';
+import { useEffect, useRef } from 'react';
+import webGLFluidEnhanced from 'webgl-fluid-enhanced';
 
-export default function SmokeEffect({ text = "" }) {
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-  const containerRef = useRef(null);
+export default function SmokeEffect({ children }) {
+  const canvasRef = useRef(null);
 
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    // Calculamos la posición del ratón en porcentajes para un posicionamiento CSS fácil
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  };
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    // Iniciamos el motor WebGL
+    webGLFluidEnhanced.simulation(canvasRef.current, {
+      SIM_RESOLUTION: 128,
+      DYE_RESOLUTION: 1024,
+      DENSITY_DISSIPATION: 0.96, // Qué tan rápido se esfuma el humo
+      VELOCITY_DISSIPATION: 0.98,
+      PRESSURE: 0.8,
+      CURL: 25, // Turbulencia/remolinos
+      SPLAT_RADIUS: 0.4, // El tamaño de la zona que borras con tu ratón
+      SPLAT_FORCE: 6000,
+      SHADING: true,
+      COLORFUL: false,
+      TRANSPARENT: true,
+      BLOOM: true,
+      BLOOM_ITERATIONS: 8,
+      BLOOM_RESOLUTION: 256,
+      BLOOM_INTENSITY: 0.8,
+      TRIGGER: 'hover' // Reacciona al cursor
+    });
+
+    // Inyectamos el plasma/fuego constantemente desde la derecha
+    const fireInterval = setInterval(() => {
+      if (!canvasRef.current) return;
+      const rect = canvasRef.current.getBoundingClientRect();
+      
+      const x = rect.width; // Borde derecho
+      const y = rect.height / 2 + (Math.random() * 400 - 200); 
+      const dx = -1500; // Fuerza hacia la izquierda
+      const dy = Math.random() * 600 - 300; 
+
+      // Núcleo blanco y aura azul
+      webGLFluidEnhanced.splat(x, y, dx, dy, '#ffffff'); 
+      webGLFluidEnhanced.splat(x - 50, y, dx, dy, '#78beff'); 
+    }, 150);
+
+    return () => clearInterval(fireInterval);
+  }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.wrapper}
-      onMouseMove={handleMouseMove}
-    >
-      {/* Capas de humo originales */}
-      <div className={styles.glowBurst}></div>
-      <div className={styles.smokeLayer}></div>
-      <div className={`${styles.smokeLayer} ${styles.smokeLayerDelayed}`}></div>
-      <div className={styles.extraSmoke}></div>
-
-      {/* Capa interactiva: "borra" el humo imitando el color del fondo oscuro */}
-      <div
-        className={styles.cursorInteract}
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#020611' }}>
+      <canvas
+        ref={canvasRef}
         style={{
-          background: `radial-gradient(circle at ${mousePos.x}% ${mousePos.y}%, #000000 0%, transparent 15vw)`
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'auto'
         }}
       />
-
-      {text && <div className={styles.text}>{text}</div>}
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%' }}>
+        {children}
+      </div>
     </div>
   );
 }
