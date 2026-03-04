@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// IMPORTACIÓN DINÁMICA: Esto evita que el WebGL rompa Next.js
+// IMPORTACIÓN DINÁMICA: Le decimos a Render que ignore esto en el servidor
 const SmokeEffect = dynamic(() => import('../SmokeEffect'), { 
   ssr: false 
 });
