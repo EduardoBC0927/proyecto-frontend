@@ -1,67 +1,84 @@
 "use client";
 import { useEffect, useRef } from 'react';
-import webGLFluidEnhanced from 'webgl-fluid-enhanced';
 
 export default function SmokeEffect({ children }: { children: React.ReactNode }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!containerRef.current) return;
 
-    // @ts-ignore
-    webGLFluidEnhanced.simulation(canvasRef.current, {
-      SIM_RESOLUTION: 128,
-      DYE_RESOLUTION: 1024,
-      DENSITY_DISSIPATION: 0.96,
-      VELOCITY_DISSIPATION: 0.98,
-      PRESSURE: 0.8,
-      CURL: 25,
-      SPLAT_RADIUS: 0.4,
-      SPLAT_FORCE: 6000,
-      SHADING: true,
-      COLORFUL: false,
-      TRANSPARENT: true,
-      BLOOM: true,
-      BLOOM_ITERATIONS: 8,
-      BLOOM_RESOLUTION: 256,
-      BLOOM_INTENSITY: 0.8,
-      TRIGGER: 'hover'
-    });
+    // 1. Inicializamos con null y un tipo más descriptivo si es posible
+    let fluidInstance: any = null;
+    let fireInterval: NodeJS.Timeout | null = null;
 
-    const fireInterval = setInterval(() => {
-      if (!canvasRef.current) return;
-      const rect = canvasRef.current.getBoundingClientRect();
-      
-      const x = rect.width;
-      const y = rect.height / 2 + (Math.random() * 400 - 200); 
-      const dx = -1500;
-      const dy = Math.random() * 600 - 300; 
+    // ... (resto del código igual)
+    const start = async () => {
+      try {
+        // 1. Forzamos el tipo a 'any' aquí para evitar que TS se queje de los .default
+        const module: any = await import('webgl-fluid-enhanced');
+        
+        // 2. Ahora esto no marcará error
+        const FluidClass = module.default?.default || module.default || module;
+        
+        if (containerRef.current) {
+// ... (sigue el código)
+          fluidInstance = new FluidClass(containerRef.current);
 
-      // @ts-ignore
-      webGLFluidEnhanced.splat(x, y, dx, dy, '#ffffff'); 
-      // @ts-ignore
-      webGLFluidEnhanced.splat(x - 50, y, dx, dy, '#78beff'); 
-    }, 150);
+          fluidInstance.setConfig({
+            simResolution: 128,
+            dyeResolution: 1024,
+            densityDissipation: 0.97,
+            velocityDissipation: 0.98,
+            curl: 30,
+            splatRadius: 0.35,
+            transparent: true,
+            hover: true,
+            brightness: 1.0
+          });
 
-    return () => clearInterval(fireInterval);
+          fluidInstance.start();
+
+          // 2. Iniciamos el intervalo solo después de que fluidInstance existe
+          fireInterval = setInterval(() => {
+            if (fluidInstance && typeof fluidInstance.splatAtLocation === 'function') {
+              fluidInstance.splatAtLocation(
+                window.innerWidth, 
+                window.innerHeight / 2, 
+                -1000, 
+                0, 
+                '#ffffff'
+              );
+            }
+          }, 150);
+        }
+      } catch (e) { 
+        console.error("Error visual:", e); 
+      }
+    };
+
+    start();
+
+    return () => {
+      // 3. Limpieza segura
+      if (fireInterval) clearInterval(fireInterval);
+      if (fluidInstance && typeof fluidInstance.stop === 'function') {
+        fluidInstance.stop();
+      }
+    };
   }, []);
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', backgroundColor: '#020611' }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 0,
-          pointerEvents: 'auto'
-        }}
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: '#020611', zIndex: 0 }}>
+      {/* CAPA 1: EL HUMO */}
+      <div 
+        ref={containerRef} 
+        style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'auto' }} 
       />
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%' }}>
-        {children}
+      {/* CAPA 2: CONTENIDO */}
+      <div style={{ position: 'relative', zIndex: 2, width: '100vw', height: '100vh', pointerEvents: 'none' }}>
+        <div style={{ pointerEvents: 'auto' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
